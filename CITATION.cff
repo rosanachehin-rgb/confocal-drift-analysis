@@ -6,7 +6,7 @@ abstract: >-
   experimental group in grouped imaging experiments, before any biological
   conclusion is drawn from the images.
 type: software
-version: 0.2.0
+version: 0.2.1
 license: MIT
 doi: 10.5281/zenodo.22206711
 repository-code: https://github.com/rosanachehin-rgb/confocal-drift-analysis
