@@ -123,6 +123,41 @@ def eta_squared(values, labels):
     return float(ss_between / ss_total)
 
 
+def eta_squared_null(n, k):
+    """Expected eta^2 when the labels carry no information about the values.
+
+    eta^2 is biased upwards by the number of groups: assigning n observations
+    at random to k groups already explains (k-1)/(n-1) of the variance, before
+    any real structure. With five groups over eighty images that floor is 0.05
+    and can be ignored; with fifty groups over two hundred it is 0.25 and the
+    fixed interpretive bands stop meaning what they say.
+
+    Reported next to eta^2 so a raw value can be read against its own floor.
+    """
+    if n is None or k is None or n < 2 or k < 2 or k > n:
+        return np.nan
+    return float((k - 1) / (n - 1))
+
+
+def epsilon_squared(values, labels):
+    """Bias-corrected eta^2, subtracting the variance explained by chance.
+
+    Zero when the labels explain no more than a random partition of the same
+    sizes would. Negative values are returned as given rather than clipped,
+    because a value below zero is itself informative: the groups are more
+    evenly spread through the session than chance would put them.
+    """
+    v = np.asarray(values, dtype=float)
+    lab = np.asarray(labels)
+    ok = np.isfinite(v)
+    v, lab = v[ok], lab[ok]
+    n, k = v.size, np.unique(lab).size
+    eta = eta_squared(v, lab)
+    if not np.isfinite(eta) or n <= k:
+        return np.nan
+    return float(eta - (k - 1) / (n - k) * (1.0 - eta))
+
+
 def eta_squared_permutation_p(values, labels, n_perm=10000, seed=0):
     """Permutation p-value for eta^2, shuffling the group labels.
 
