@@ -1,5 +1,7 @@
 # acqdrift
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22206711.svg)](https://doi.org/10.5281/zenodo.22206711)
+
 Pre-flight quality control for grouped imaging sessions.
 
 Two checks that run before any measurement is interpreted, and that answer one
