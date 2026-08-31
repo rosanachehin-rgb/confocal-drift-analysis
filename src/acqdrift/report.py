@@ -36,6 +36,11 @@ def render_schedule(report) -> str:
     out.append("  in acquisition times that knowing the group already accounts")
     out.append("  for. At 1.0 the group tells you exactly when the image was")
     out.append("  taken, and the two cannot be separated by any analysis.")
+    out.append(f"  Chance floor for this design ({report.n_groups} groups, "
+               f"{report.n_images} images): {_fmt(report.eta_null)}. "
+               f"Bias-corrected: {_fmt(report.epsilon_squared)}")
+    out.append("  Read eta^2 against that floor. Assigning these images to")
+    out.append("  these group sizes at random already explains that much.")
     overlapping = int((report.overlap["overlap_min"] > 0).sum())
     total_pairs = len(report.overlap)
     out.append(f"Group pairs whose windows overlap in time: {overlapping} of {total_pairs}")
@@ -72,6 +77,17 @@ def render_schedule(report) -> str:
             "  Groups are partly separated in time. Effects will be",
             "  attenuated or inflated depending on the direction of any",
             "  drift; check Level 2 before drawing conclusions.",
+        ]
+    elif report.verdict == "INCONCLUSIVE":
+        out += [
+            "",
+            f"  {report.verdict_reason}.",
+            "  The schedule was measured but the usual cuts do not apply to a",
+            "  design of this shape, so no verdict is issued. This is not a",
+            "  clean result: the session may or may not be confounded. Read",
+            "  the bias-corrected value and the permutation P above, or group",
+            "  the images by the comparison the study actually makes rather",
+            "  than by a replicate or acquisition identifier.",
         ]
     return "\n".join(out)
 
