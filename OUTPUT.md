@@ -81,15 +81,33 @@ full session.
 |---|---|
 | acquisition window per group | first and last minute each group occupies |
 | `eta_squared` | fraction of the variance in acquisition time explained by group |
+| `eta_null` | what a random partition into the same group sizes already explains, (k−1)/(n−1) |
+| `epsilon_squared` | η² with that floor removed; zero means no more than chance |
 | `eta_p` | permutation p-value, from shuffled group labels |
 | overlapping pairs | how many group pairs share any part of the session, out of all pairs |
 | `max_run` | longest streak of consecutive images from one group |
 | `max_run_expected` | mean longest streak under random ordering, for comparison |
+| `min_group_n` | images in the smallest group |
+| `bands_reliable` | whether the η² cuts below apply to a design of this shape |
 | settings checked | how many `set_*` tags were present and constant |
-| `verdict` | `OK` (η² < 0.60), `AT RISK` (0.60–0.90), `CONFOUNDED` (≥ 0.90) |
+| `verdict` | `OK` (η² < 0.60), `AT RISK` (0.60–0.90), `CONFOUNDED` (≥ 0.90), `INCONCLUSIVE` |
+| `verdict_reason` | why the bands were withheld, when they were |
 
 Zero overlapping pairs together with a `max_run` far above expectation is the
 signature of a design where each group was acquired as one uninterrupted block.
+
+**η² has a floor that rises with the number of groups.** Assigning n images to k
+groups at random already explains (k−1)/(n−1) of the variance in acquisition
+time. With five groups over eighty images that floor is 0.05 and can be ignored.
+With fifty groups over two hundred it is 0.25, and a raw η² read against the
+cuts above would call a well-interleaved session confounded. The bands assume a
+handful of groups over many images, so the audit returns `INCONCLUSIVE` rather
+than a verdict when the smallest group holds fewer than 5 images or when
+`eta_null` exceeds 0.15. Both cuts are conventions chosen to be legible.
+
+`INCONCLUSIVE` here is not a pass. It means the schedule was measured and could
+not be judged, usually because the column supplied as `group` was a replicate or
+acquisition identifier rather than the comparison the study makes.
 
 ---
 
