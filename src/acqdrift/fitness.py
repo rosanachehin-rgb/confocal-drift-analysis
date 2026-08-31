@@ -20,6 +20,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+import numpy as np
+
 UNFIT = "UNFIT"
 INCONCLUSIVE = "INCONCLUSIVE"
 NO_EVIDENCE = "NO EVIDENCE OF UNFITNESS"
@@ -100,6 +102,7 @@ def assess(schedule_report, drift_report=None, sentinel_check=None,
 
     confounded = schedule_report.verdict == "CONFOUNDED"
     at_risk = schedule_report.verdict == "AT RISK"
+    schedule_unreadable = schedule_report.verdict in ("INCONCLUSIVE", "UNKNOWN")
 
     if (conditioning_report is not None
             and conditioning_report.verdict == "ILL-CONDITIONED"):
@@ -165,6 +168,22 @@ def assess(schedule_report, drift_report=None, sentinel_check=None,
                 if underpowered else "")],
             "Interleave the next session rather than relying on this one being "
             "drift-free.")
+
+    if schedule_unreadable:
+        return Fitness(
+            INCONCLUSIVE,
+            [f"The acquisition schedule could not be read on this design: "
+             f"{schedule_report.verdict_reason}.",
+             f"eta^2 = {schedule_report.eta_squared:.3f} against a chance floor "
+             f"of {schedule_report.eta_null:.3f}, so the usual cuts would be "
+             f"reading the number of groups rather than the schedule."
+             if np.isfinite(schedule_report.eta_squared) else
+             "eta^2 could not be computed.",
+             "Whether group and acquisition time are separable here is unknown, "
+             "so nothing below can be combined into a fitness verdict."],
+            "Group the images by the comparison the study actually makes rather "
+            "than by a replicate or acquisition identifier, or audit one session "
+            "at a time.")
 
     if drift_found:
         worst = drift_report.significant.iloc[0]
