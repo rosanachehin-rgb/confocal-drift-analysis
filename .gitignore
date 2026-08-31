@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.venv/
+
+# Written by the example script on each run. The committed
+# session_metrics_day5.csv is the one the tests read.
+examples/*/session_metrics.csv
