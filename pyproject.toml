@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "acqdrift"
+version = "0.2.0"
+description = "Pre-flight quality control for grouped imaging sessions: schedule confounding, instrument drift, detector pedestal, estimator conditioning and threshold selection."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "Rosana Chehín"}]
+keywords = ["microscopy", "quality-control", "confocal", "drift", "reproducibility", "czi"]
+classifiers = [
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+]
+dependencies = ["numpy>=1.22", "pandas>=1.4", "scipy>=1.8"]
+
+[project.urls]
+Homepage = "https://github.com/rosanachehin-rgb/confocal-drift-analysis"
+Issues = "https://github.com/rosanachehin-rgb/confocal-drift-analysis/issues"
+
+[project.optional-dependencies]
+czi = ["czifile>=2019.7.2"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+acqdrift = "acqdrift.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
