@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.1
+
+A guard on the shape of the design, found by running Level 1 against public
+depositions in the Image Data Resource.
+
+- eta^2 is bounded below by (k-1)/(n-1): a random partition into k groups already
+  explains that much of the variance in acquisition time. Fifty groups over two
+  hundred images puts the floor at 0.25, so a raw eta^2 read against the fixed cuts
+  called a well-interleaved session confounded. `eta_squared_null` and
+  `epsilon_squared` report and remove the floor, and both are printed next to it.
+- `ScheduleReport` gains `eta_null`, `epsilon_squared`, `min_group_n`,
+  `bands_reliable` and `verdict_reason`. The verdict is withheld as
+  `INCONCLUSIVE` when the smallest group holds fewer than 5 images or the floor
+  exceeds 0.15. Both cuts are conventions chosen to be legible.
+- `separable` is now false on a design the bands cannot judge, so it can no
+  longer be read as a pass.
+- The fitness verdict folds this in rather than falling through to
+  `NO EVIDENCE OF UNFITNESS`, which is what it did before.
+- The worked example is unchanged: eta^2 = 0.962 against a floor of 0.050,
+  epsilon^2 = 0.960, still `CONFOUNDED`.
+
 ## 0.2.0
 
 Four checks on whether the numbers going into the drift audit mean what they
