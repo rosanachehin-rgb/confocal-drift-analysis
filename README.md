@@ -92,6 +92,17 @@ taken. Unlike a correlation between time and a group index it does not depend
 on how the groups are ordered, which matters because that ordering is arbitrary.
 Above 0.90 the audit calls the design confounded.
 
+**eta^2 has a floor, and the floor rises with the number of groups.** Assigning n
+images to k groups at random already explains (k-1)/(n-1) of the variance in
+acquisition time. Five groups over eighty images puts that at 0.05, which is
+ignorable. Fifty groups over two hundred puts it at 0.25, and reading a raw eta^2
+against the cuts above would then call a well-interleaved session confounded.
+The audit prints the floor next to eta^2, and withholds the verdict entirely —
+`INCONCLUSIVE`, with the reason — when the smallest group holds fewer than five
+images or the floor exceeds 0.15. This came out of running Level 1 against
+public depositions where the column supplied as `group` turned out to be a
+replicate identifier with fifty levels.
+
 **q is not p.** Every drift table applies Benjamini–Hochberg across the whole
 family of group × metric tests, which in the worked example is 70 of them. Read
 q as the share of flagged rows you should expect to be false, not as the
