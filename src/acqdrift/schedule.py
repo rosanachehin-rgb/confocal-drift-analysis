@@ -16,7 +16,14 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from .stats import eta_squared, eta_squared_permutation_p
+from .stats import (epsilon_squared, eta_squared, eta_squared_null,
+                    eta_squared_permutation_p)
+
+# Conditions under which the fixed eta^2 bands below are trusted. Both are
+# conventions chosen to be legible, not values derived from anything, and the
+# report states them so a reader can disagree with them.
+MIN_GROUP_N = 5      # smallest group must hold at least this many images
+MAX_ETA_NULL = 0.15  # chance floor for eta^2 must stay below this
 
 
 @dataclass
@@ -30,18 +37,60 @@ class ScheduleReport:
     max_run_expected: float
     blocks: pd.DataFrame
     overlap: pd.DataFrame
+    epsilon_squared: float = float("nan")
     settings_varying: dict = field(default_factory=dict)
     settings_constant: dict = field(default_factory=dict)
 
     @property
+    def eta_null(self) -> float:
+        """Variance a random partition into these many groups already explains."""
+        return eta_squared_null(self.n_images, self.n_groups)
+
+    @property
+    def min_group_n(self) -> int:
+        if self.blocks is None or self.blocks.empty:
+            return 0
+        return int(self.blocks["n"].min())
+
+    @property
+    def bands_reliable(self) -> bool:
+        """Whether the fixed eta^2 bands mean what they say on this design.
+
+        They are calibrated for a handful of groups over tens of images. Where
+        the groups are many and small, eta^2 is pushed towards 1 by the number
+        of groups alone, and a raw value read against the usual cuts would call
+        a well-interleaved session confounded.
+        """
+        null = self.eta_null
+        return bool(self.min_group_n >= MIN_GROUP_N
+                    and np.isfinite(null) and null <= MAX_ETA_NULL)
+
+    @property
     def separable(self) -> bool:
         """Whether group and acquisition time can be told apart at all."""
-        return bool(np.isfinite(self.eta_squared) and self.eta_squared < 0.60)
+        return bool(np.isfinite(self.eta_squared)
+                    and self.bands_reliable
+                    and self.eta_squared < 0.60)
+
+    @property
+    def verdict_reason(self) -> str:
+        if not np.isfinite(self.eta_squared):
+            return "eta^2 could not be computed"
+        if self.min_group_n < MIN_GROUP_N:
+            return (f"smallest group holds {self.min_group_n} image(s); "
+                    f"at least {MIN_GROUP_N} are needed for the bands to apply")
+        if not np.isfinite(self.eta_null) or self.eta_null > MAX_ETA_NULL:
+            return (f"{self.n_groups} groups over {self.n_images} images put the "
+                    f"chance floor for eta^2 at {self.eta_null:.2f}; "
+                    f"the bands assume it stays below {MAX_ETA_NULL:.2f}")
+        return ""
 
     @property
     def verdict(self) -> str:
         if not np.isfinite(self.eta_squared):
             return "UNKNOWN"
+        if not self.bands_reliable:
+            return "INCONCLUSIVE"
         if self.eta_squared >= 0.90:
             return "CONFOUNDED"
         if self.eta_squared >= 0.60:
@@ -123,6 +172,8 @@ def audit_schedule(df, group_col="group", time_col="t_min",
         session_minutes=float(d[time_col].max() - d[time_col].min()),
         eta_squared=eta,
         eta_p=eta_p,
+        epsilon_squared=epsilon_squared(d[time_col].to_numpy(),
+                                        d[group_col].to_numpy()),
         max_run=_max_run(d[group_col].tolist()),
         max_run_expected=_expected_max_run(counts, seed=seed),
         blocks=blocks,
